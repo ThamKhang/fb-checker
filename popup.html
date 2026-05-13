@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>FB Page Follower Checker</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>📊 Page Follower Checker</h1>
+    </header>
+
+    <section class="card">
+      <div class="input-group">
+        <label>Access Token</label>
+        <div class="token-row">
+          <input type="text" id="tokenInput" placeholder="Bấm nút bên phải để tự lấy token...">
+          <button id="btnGetToken" class="btn btn-token">🔑 Tự lấy</button>
+        </div>
+        <span id="tokenStatus"></span>
+      </div>
+
+      <div class="input-group">
+        <label>Danh sách Page ID (mỗi ID 1 dòng)</label>
+        <textarea id="pageIds" rows="6"></textarea>
+      </div>
+
+      <button id="btnFetch" class="btn btn-primary">🔍 Bắt đầu lấy dữ liệu</button>
+    </section>
+
+    <section class="card" id="resultsSection" style="display:none">
+      <div class="results-header">
+        <strong>Kết quả</strong>
+        <button id="btnDownloadCsv" class="btn btn-secondary" disabled>⬇ Tải CSV</button>
+      </div>
+
+      <div class="status-panel">
+        <div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+        <p id="statusText">Đang chuẩn bị...</p>
+        <div class="stats">
+          <div class="stat success"><span id="statSuccess">0</span><small>Thành công</small></div>
+          <div class="stat error"><span id="statError">0</span><small>Lỗi</small></div>
+          <div class="stat total"><span id="statTotal">0</span><small>Tổng Followers</small></div>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>#</th><th>Tên Page</th><th id="thFollowers" style="cursor:pointer" title="Click để sắp xếp">Followers ⇅</th><th>Page ID</th></tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>

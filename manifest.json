@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "FB Page Follower Checker",
+  "version": "1.0",
+  "description": "Kiểm tra followers và likes của Facebook pages",
+  "permissions": ["scripting", "tabs", "sidePanel"],
+  "host_permissions": [
+    "https://*.facebook.com/*",
+    "https://graph.facebook.com/*",
+    "https://adsmanager.facebook.com/*"
+  ],
+  "action": {
+    "default_title": "FB Page Follower Checker"
+  },
+  "side_panel": {
+    "default_path": "popup.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  }
+}
