@@ -13,6 +13,7 @@ zip -r "$OUTPUT" \
   popup.js \
   style.css \
   background.js \
+  icons/ \
   -x "*.DS_Store" "*.git*"
 
 echo "✅ Đã tạo: $OUTPUT ($(du -sh $OUTPUT | cut -f1))"
