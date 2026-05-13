@@ -2,8 +2,8 @@
   "manifest_version": 3,
   "name": "FB Page Follower Checker",
   "version": "1.0",
-  "description": "Kiểm tra followers và likes của Facebook pages",
-  "permissions": ["scripting", "tabs", "sidePanel"],
+  "description": "Kiểm tra số Followers của nhiều Facebook Page cùng lúc",
+  "permissions": ["tabs", "sidePanel"],
   "host_permissions": [
     "https://*.facebook.com/*",
     "https://graph.facebook.com/*",

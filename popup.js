@@ -1,10 +1,4 @@
-const DEFAULT_PAGE_IDS = [
-    "308803999591355","101010771530276","172079562330","428332084354763",
-    "696899960332683","585345985271165","103506272812343","329703680481146",
-    "1018430081523783","759863570703626","108722961945775","103986131767384",
-    "101969072895829","107147268969392","105719225968126","155746825041536",
-    "1910803309232789"
-];
+const DEFAULT_PAGE_IDS = [];
 
 const GRAPH_URL = "https://graph.facebook.com/v21.0/";
 const BATCH_SIZE = 10;
@@ -31,6 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 const fmt = (n) => (n !== '' && n != null) ? new Intl.NumberFormat('en-US').format(n) : '';
+const esc = (s) => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 const chunkArr = (arr, size) => Array.from({ length: Math.ceil(arr.length / size) }, (_, i) => arr.slice(i * size, i * size + size));
 
 // Lấy EAAB token từ adsmanager.facebook.com (cùng cách extension "Get Token Cookie")
@@ -181,12 +176,13 @@ function renderTable() {
 
     rows.forEach((row, i) => {
         const tr = document.createElement('tr');
-            if (row.error) {
+        if (row.error) {
             tr.className = 'row-error';
-            tr.innerHTML = `<td>${i + 1}</td><td colspan="2">⚠ ${row.error}</td><td>${row.page_id}</td>`;
+            tr.innerHTML = `<td>${i + 1}</td><td colspan="2">⚠ ${esc(row.error)}</td><td>${esc(row.page_id)}</td>`;
         } else {
-            const name = row.name.length > 30 ? row.name.slice(0, 28) + '..' : row.name;
-            tr.innerHTML = `<td>${i + 1}</td><td title="${row.name}"><strong>${name}</strong></td><td>${fmt(row.followers)}</td><td class="muted">${row.page_id}</td>`;
+            const fullName = esc(row.name);
+            const shortName = row.name.length > 30 ? esc(row.name.slice(0, 28)) + '..' : fullName;
+            tr.innerHTML = `<td>${i + 1}</td><td title="${fullName}"><strong>${shortName}</strong></td><td>${fmt(row.followers)}</td><td class="muted">${esc(row.page_id)}</td>`;
         }
         tableBody.appendChild(tr);
     });
