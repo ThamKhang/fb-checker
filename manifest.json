@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
-  "name": "FB Page Follower Checker",
-  "version": "1.0",
-  "description": "Kiểm tra số Followers của nhiều Facebook Page cùng lúc",
-  "permissions": ["tabs", "sidePanel"],
+  "name": "FB Tools",
+  "version": "1.1",
+  "description": "Bộ công cụ quản lý Facebook Page: theo dõi followers, xóa bài viết, phân tích content",
+  "permissions": ["tabs", "sidePanel", "storage", "webRequest"],
   "host_permissions": [
     "https://*.facebook.com/*",
     "https://graph.facebook.com/*",

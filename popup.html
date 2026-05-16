@@ -2,59 +2,102 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <title>FB Page Follower Checker</title>
+  <title>FB Tools</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="container">
-    <header>
-      <h1>📊 Page Follower Checker</h1>
-    </header>
+<div class="app">
 
-    <section class="card">
-      <div class="input-group">
-        <label>Access Token</label>
-        <div class="token-row">
-          <input type="text" id="tokenInput" placeholder="Bấm nút bên phải để tự lấy token...">
-          <button id="btnGetToken" class="btn btn-token">🔑 Tự lấy</button>
-        </div>
-        <span id="tokenStatus"></span>
-      </div>
+  <header class="header">
+    <div class="header-left">
+      <img src="icons/icon48.png" width="24" height="24" alt="">
+      <span class="header-title">FB Tools</span>
+    </div>
+    <span class="version-badge">v1.1</span>
+  </header>
 
-      <div class="input-group">
-        <label>Danh sách Page ID (mỗi ID 1 dòng)</label>
-        <textarea id="pageIds" rows="6"></textarea>
-      </div>
-
-      <button id="btnFetch" class="btn btn-primary">🔍 Bắt đầu lấy dữ liệu</button>
-    </section>
-
-    <section class="card" id="resultsSection" style="display:none">
-      <div class="results-header">
-        <strong>Kết quả</strong>
-        <button id="btnDownloadCsv" class="btn btn-secondary" disabled>⬇ Tải CSV</button>
-      </div>
-
-      <div class="status-panel">
-        <div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
-        <p id="statusText">Đang chuẩn bị...</p>
-        <div class="stats">
-          <div class="stat success"><span id="statSuccess">0</span><small>Thành công</small></div>
-          <div class="stat error"><span id="statError">0</span><small>Lỗi</small></div>
-          <div class="stat total"><span id="statTotal">0</span><small>Tổng Followers</small></div>
-        </div>
-      </div>
-
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr><th>#</th><th>Tên Page</th><th id="thFollowers" style="cursor:pointer" title="Click để sắp xếp">Followers ⇅</th><th>Page ID</th></tr>
-          </thead>
-          <tbody id="tableBody"></tbody>
-        </table>
-      </div>
-    </section>
+  <!-- Token -->
+  <div class="section">
+    <div class="section-label">🔑 Access Token</div>
+    <div class="token-row">
+      <input type="text" id="tokenInput" placeholder="Paste token hoặc bấm Tự lấy...">
+      <button id="btnGetToken" class="btn btn-token">Tự lấy</button>
+    </div>
+    <span id="tokenStatus"></span>
   </div>
-  <script src="popup.js"></script>
+
+  <!-- Page IDs -->
+  <div class="section">
+    <div class="section-label">📋 Page IDs <span class="hint">— mỗi dòng 1 ID</span></div>
+    <textarea id="pageIds" rows="4" placeholder="Page ID, URL hoặc username — mỗi dòng 1 trang&#10;VD: 123456789&#10;https://facebook.com/pagename&#10;@pagename"></textarea>
+  </div>
+
+  <!-- Tool Grid -->
+  <div class="section">
+    <div class="section-label">Chọn công cụ</div>
+    <div class="tool-grid">
+
+      <button class="tool-card" id="toolFollowers">
+        <span class="tool-icon">📊</span>
+        <span class="tool-name">Followers Checker</span>
+        <span class="tool-desc">Xem số followers nhiều page</span>
+      </button>
+
+      <button class="tool-card" id="toolManager">
+        <span class="tool-icon">🗑</span>
+        <span class="tool-name">Xóa bài viết</span>
+        <span class="tool-desc">Lọc &amp; xóa hàng loạt</span>
+      </button>
+
+      <button class="tool-card" id="toolAnalysis">
+        <span class="tool-icon">📈</span>
+        <span class="tool-name">Phân tích Content</span>
+        <span class="tool-desc">Thống kê &amp; biểu đồ</span>
+      </button>
+
+
+    </div>
+  </div>
+
+  <!-- Followers results (inline) -->
+  <div class="section" id="resultsSection" style="display:none">
+    <div class="status-panel">
+      <div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+      <p id="statusText"></p>
+      <div class="stats">
+        <div class="stat success"><span id="statSuccess">0</span><small>Thành công</small></div>
+        <div class="stat error"><span id="statError">0</span><small>Lỗi</small></div>
+        <div class="stat total"><span id="statTotal">0</span><small>Tổng Followers</small></div>
+      </div>
+    </div>
+    <div class="results-header">
+      <span style="font-size:11px;color:#94a3b8">Kết quả</span>
+      <button id="btnDownloadCsv" class="btn btn-sm" disabled>⬇ CSV</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Tên Page</th>
+            <th id="thFollowers" style="cursor:pointer">Followers ⇅</th>
+            <th>Page ID</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Analysis fetch progress (shown while collecting data) -->
+  <div class="section" id="analyzeSection" style="display:none">
+    <div class="status-panel">
+      <div class="progress-wrap"><div class="progress-bar" id="analyzeBar"></div></div>
+      <p id="analyzeText" style="font-size:11px;color:#94a3b8"></p>
+    </div>
+  </div>
+
+</div>
+<script src="popup.js"></script>
 </body>
 </html>
