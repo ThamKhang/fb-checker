@@ -279,9 +279,23 @@ function showConfirmModal({ title, body, confirmLabel, danger = false, onConfirm
     overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
 }
 
+// ── Export CSV ────────────────────────────────────────────
+
+function exportPostsCsv(posts, pageName) {
+    const q   = s => `"${String(s ?? '').replace(/"/g, '""')}"`;
+    let csv   = '﻿id,message,created_time,type,reactions,comments,shares,url\n';
+    posts.forEach(p => {
+        csv += [p.id, p.message, p.created_time, p.type, p.reactions, p.comments, p.shares, p.permalink_url].map(q).join(',') + '\n';
+    });
+    const a   = document.createElement('a');
+    a.href    = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+    a.download = `${pageName.replace(/[^a-z0-9]/gi, '_')}_posts_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+}
+
 // ── Management section ────────────────────────────────────
 
-function renderManagementSection(container, pageData, pageToken) {
+function renderManagementSection(container, pageData, pageToken, isManaged) {
     let allPosts    = [...pageData.posts];
     let filtered    = [...allPosts];
     let selected    = new Set();
@@ -291,6 +305,7 @@ function renderManagementSection(container, pageData, pageToken) {
     container.innerHTML = `
       <section class="chart-card management-card">
 
+        ${isManaged ? `
         <div class="mgmt-token-row">
           <button id="btnAutoToken" class="btn-auto-token">🔑 Lấy Page Token tự động</button>
           <span class="token-divider">hoặc</span>
@@ -298,6 +313,11 @@ function renderManagementSection(container, pageData, pageToken) {
           <button id="btnSetToken" class="btn-apply">Dùng</button>
           <span id="tokenMsg" class="token-msg"></span>
         </div>
+        ` : `
+        <div class="mgmt-readonly-notice">
+          🔒 Bạn không phải admin — chỉ xem và xuất dữ liệu
+        </div>
+        `}
 
         <div class="mgmt-filter">
           <div class="mgmt-presets" id="mgmtPresets"></div>
@@ -317,9 +337,10 @@ function renderManagementSection(container, pageData, pageToken) {
         </div>
 
         <div class="mgmt-sel-row">
-          <label class="check-all-label"><input type="checkbox" id="checkAll"> Chọn tất cả</label>
-          <span id="selCount" class="sel-count">Đã chọn: 0 / ${allPosts.length} bài</span>
-          <button id="btnDeleteSel" class="btn-delete-sel" disabled>🗑 Xóa bài đã chọn</button>
+          ${isManaged ? `<label class="check-all-label"><input type="checkbox" id="checkAll"> Chọn tất cả</label>` : ''}
+          <span id="selCount" class="sel-count">${isManaged ? `Đã chọn: 0 / ${allPosts.length} bài` : `${allPosts.length} bài viết`}</span>
+          <button id="btnExportCsv" class="btn-export">⬇ Xuất CSV</button>
+          ${isManaged ? `<button id="btnDeleteSel" class="btn-delete-sel" disabled>🗑 Xóa bài đã chọn</button>` : ''}
         </div>
 
         <div class="mgmt-progress" id="mgmtProgress" style="display:none">
@@ -337,62 +358,71 @@ function renderManagementSection(container, pageData, pageToken) {
       </section>
     `;
 
-    const section       = container.querySelector('section');
-    const manualInput   = section.querySelector('#manualPageToken');
-    const btnSetToken   = section.querySelector('#btnSetToken');
-    const btnAutoToken  = section.querySelector('#btnAutoToken');
-    const tokenMsg      = section.querySelector('#tokenMsg');
-    const presetsWrap   = section.querySelector('#mgmtPresets');
-    const fromInput     = section.querySelector('#mgmtFrom');
-    const toInput       = section.querySelector('#mgmtTo');
-    const typeSelect    = section.querySelector('#mgmtType');
-    const applyBtn      = section.querySelector('#mgmtApply');
-    const checkAll      = section.querySelector('#checkAll');
-    const selCount      = section.querySelector('#selCount');
-    const btnDeleteSel  = section.querySelector('#btnDeleteSel');
-    const progressArea  = section.querySelector('#mgmtProgress');
-    const progBar       = section.querySelector('#mgmtProgBar');
-    const progText      = section.querySelector('#mgmtProgText');
-    const listWrap      = section.querySelector('#mgmtList');
-    const pagPrev       = section.querySelector('#pagPrev');
-    const pagNext       = section.querySelector('#pagNext');
-    const pagInfo       = section.querySelector('#pagInfo');
+    const section      = container.querySelector('section');
+    const presetsWrap  = section.querySelector('#mgmtPresets');
+    const fromInput    = section.querySelector('#mgmtFrom');
+    const toInput      = section.querySelector('#mgmtTo');
+    const typeSelect   = section.querySelector('#mgmtType');
+    const applyBtn     = section.querySelector('#mgmtApply');
+    const selCount     = section.querySelector('#selCount');
+    const btnExportCsv = section.querySelector('#btnExportCsv');
+    const listWrap     = section.querySelector('#mgmtList');
+    const pagPrev      = section.querySelector('#pagPrev');
+    const pagNext      = section.querySelector('#pagNext');
+    const pagInfo      = section.querySelector('#pagInfo');
 
-    function setTokenOk(token, label) {
-        activeToken = token;
-        tokenMsg.textContent = `✓ ${label}`;
-        tokenMsg.className   = 'token-msg ok';
-    }
+    // Admin-only refs
+    const manualInput  = section.querySelector('#manualPageToken');
+    const btnSetToken  = section.querySelector('#btnSetToken');
+    const btnAutoToken = section.querySelector('#btnAutoToken');
+    const tokenMsg     = section.querySelector('#tokenMsg');
+    const checkAll     = section.querySelector('#checkAll');
+    const btnDeleteSel = section.querySelector('#btnDeleteSel');
+    const progressArea = section.querySelector('#mgmtProgress');
+    const progBar      = section.querySelector('#mgmtProgBar');
+    const progText     = section.querySelector('#mgmtProgText');
 
-    btnSetToken.addEventListener('click', () => {
-        const val = manualInput.value.trim();
-        if (val) setTokenOk(val, 'Token đã lưu');
-    });
+    // ── Export ──
+    btnExportCsv.addEventListener('click', () => exportPostsCsv(filtered, pageData.pageName));
 
-    btnAutoToken.addEventListener('click', async () => {
-        if (!_userToken) { tokenMsg.textContent = '✗ Chưa có token — mở lại từ extension'; tokenMsg.className = 'token-msg err'; return; }
-        btnAutoToken.disabled     = true;
-        btnAutoToken.textContent  = '⏳ Đang lấy...';
-        tokenMsg.textContent      = '';
-        tokenMsg.className        = 'token-msg';
-
-        const result = await autoFetchPageToken(pageData.pageId, _userToken);
-
-        btnAutoToken.disabled    = false;
-        btnAutoToken.textContent = '🔑 Lấy Page Token tự động';
-
-        if (result?.token) {
-            manualInput.value = result.token;
-            setTokenOk(result.token, `Lấy thành công (${result.source})`);
-        } else {
-            const errDetail = result?.errors?.join(' | ') || '';
-            tokenMsg.innerHTML = `✗ Tự động thất bại.<br>
-              <small style="color:#475569">${esc(errDetail)}</small><br>
-              <strong style="color:#f59e0b">💡 Thử:</strong> Mở tab Facebook → vào trang quản lý page → bấm lại.<br>
-              Hoặc vào <a href="https://developers.facebook.com/tools/explorer/" target="_blank" class="post-link">Graph API Explorer ↗</a> → tick <code>pages_manage_posts</code> → dán token vào ô trên.`;
-            tokenMsg.className = 'token-msg err';
+    // ── Admin-only: token management ──
+    if (isManaged) {
+        function setTokenOk(token, label) {
+            activeToken = token;
+            tokenMsg.textContent = `✓ ${label}`;
+            tokenMsg.className   = 'token-msg ok';
         }
-    });
+
+        btnSetToken.addEventListener('click', () => {
+            const val = manualInput.value.trim();
+            if (val) setTokenOk(val, 'Token đã lưu');
+        });
+
+        btnAutoToken.addEventListener('click', async () => {
+            if (!_userToken) { tokenMsg.textContent = '✗ Chưa có token — mở lại từ extension'; tokenMsg.className = 'token-msg err'; return; }
+            btnAutoToken.disabled    = true;
+            btnAutoToken.textContent = '⏳ Đang lấy...';
+            tokenMsg.textContent     = '';
+            tokenMsg.className       = 'token-msg';
+
+            const result = await autoFetchPageToken(pageData.pageId, _userToken);
+
+            btnAutoToken.disabled    = false;
+            btnAutoToken.textContent = '🔑 Lấy Page Token tự động';
+
+            if (result?.token) {
+                manualInput.value = result.token;
+                setTokenOk(result.token, `Lấy thành công (${result.source})`);
+            } else {
+                const errDetail = result?.errors?.join(' | ') || '';
+                tokenMsg.innerHTML = `✗ Tự động thất bại.<br>
+                  <small style="color:#475569">${esc(errDetail)}</small><br>
+                  <strong style="color:#f59e0b">💡 Thử:</strong> Mở tab Facebook → vào trang quản lý page → bấm lại.<br>
+                  Hoặc vào <a href="https://developers.facebook.com/tools/explorer/" target="_blank" class="post-link">Graph API Explorer ↗</a> → tick <code>pages_manage_posts</code> → dán token vào ô trên.`;
+                tokenMsg.className = 'token-msg err';
+            }
+        });
+    }
 
     // Preset buttons
     TIME_PRESETS.forEach((p, i) => {
@@ -409,10 +439,14 @@ function renderManagementSection(container, pageData, pageToken) {
     });
 
     function updateCounts() {
-        const n = [...selected].filter(id => filtered.some(p => p.id === id)).length;
-        selCount.textContent      = `Đã chọn: ${n} / ${filtered.length} bài`;
-        btnDeleteSel.disabled     = n === 0;
-        btnDeleteSel.textContent  = n > 0 ? `🗑 Xóa ${n} bài đã chọn` : '🗑 Xóa bài đã chọn';
+        if (isManaged) {
+            const n = [...selected].filter(id => filtered.some(p => p.id === id)).length;
+            selCount.textContent     = `Đã chọn: ${n} / ${filtered.length} bài`;
+            btnDeleteSel.disabled    = n === 0;
+            btnDeleteSel.textContent = n > 0 ? `🗑 Xóa ${n} bài đã chọn` : '🗑 Xóa bài đã chọn';
+        } else {
+            selCount.textContent = `${filtered.length} bài viết`;
+        }
     }
 
     function renderList() {
@@ -435,7 +469,7 @@ function renderManagementSection(container, pageData, pageToken) {
         const table = document.createElement('table');
         table.className = 'post-table mgmt-table';
         table.innerHTML = `<thead><tr>
-          <th><input type="checkbox" id="checkPage"></th>
+          ${isManaged ? '<th><input type="checkbox" id="checkPage"></th>' : ''}
           <th>#</th><th>Bài viết</th><th>Ngày</th>
           <th class="num">❤️</th><th class="num">💬</th><th class="num">🔁</th>
           <th>Loại</th><th></th>
@@ -444,11 +478,11 @@ function renderManagementSection(container, pageData, pageToken) {
         const tbody = document.createElement('tbody');
         pagePosts.forEach((p, i) => {
             const tr    = document.createElement('tr');
-            if (selected.has(p.id)) tr.classList.add('selected-row');
+            if (isManaged && selected.has(p.id)) tr.classList.add('selected-row');
             const raw   = p.message || '(Không có nội dung)';
             const short = raw.length > 62 ? raw.slice(0, 60) + '…' : raw;
             tr.innerHTML = `
-              <td><input type="checkbox" class="post-chk" data-id="${esc(p.id)}" ${selected.has(p.id) ? 'checked' : ''}></td>
+              ${isManaged ? `<td><input type="checkbox" class="post-chk" data-id="${esc(p.id)}" ${selected.has(p.id) ? 'checked' : ''}></td>` : ''}
               <td class="rank">${start + i + 1}</td>
               <td class="post-msg" title="${esc(raw)}">${esc(short)}</td>
               <td class="post-date">${fmtDate(p.created_time)}</td>
@@ -463,31 +497,34 @@ function renderManagementSection(container, pageData, pageToken) {
         table.appendChild(tbody);
         listWrap.appendChild(table);
 
-        const pageChk   = table.querySelector('#checkPage');
-        const allChked  = pagePosts.every(p => selected.has(p.id));
-        const someChked = pagePosts.some(p => selected.has(p.id));
-        pageChk.checked       = allChked;
-        pageChk.indeterminate = someChked && !allChked;
+        if (isManaged) {
+            const pageChk   = table.querySelector('#checkPage');
+            const allChked  = pagePosts.every(p => selected.has(p.id));
+            const someChked = pagePosts.some(p => selected.has(p.id));
+            pageChk.checked       = allChked;
+            pageChk.indeterminate = someChked && !allChked;
 
-        pageChk.addEventListener('change', () => {
-            pagePosts.forEach(p => { if (pageChk.checked) selected.add(p.id); else selected.delete(p.id); });
-            renderList(); updateCounts();
-        });
-
-        table.querySelectorAll('.post-chk').forEach(chk => {
-            chk.addEventListener('change', () => {
-                if (chk.checked) selected.add(chk.dataset.id);
-                else             selected.delete(chk.dataset.id);
-                chk.closest('tr').classList.toggle('selected-row', chk.checked);
-                const all  = pagePosts.every(p => selected.has(p.id));
-                const some = pagePosts.some(p => selected.has(p.id));
-                pageChk.checked       = all;
-                pageChk.indeterminate = some && !all;
-                checkAll.checked      = filtered.every(p => selected.has(p.id));
-                checkAll.indeterminate = filtered.some(p => selected.has(p.id)) && !checkAll.checked;
-                updateCounts();
+            pageChk.addEventListener('change', () => {
+                pagePosts.forEach(p => { if (pageChk.checked) selected.add(p.id); else selected.delete(p.id); });
+                renderList(); updateCounts();
             });
-        });
+
+            table.querySelectorAll('.post-chk').forEach(chk => {
+                chk.addEventListener('change', () => {
+                    if (chk.checked) selected.add(chk.dataset.id);
+                    else             selected.delete(chk.dataset.id);
+                    chk.closest('tr').classList.toggle('selected-row', chk.checked);
+                    const all  = pagePosts.every(p => selected.has(p.id));
+                    const some = pagePosts.some(p => selected.has(p.id));
+                    pageChk.checked        = all;
+                    pageChk.indeterminate  = some && !all;
+                    checkAll.checked       = filtered.every(p => selected.has(p.id));
+                    checkAll.indeterminate = filtered.some(p => selected.has(p.id)) && !checkAll.checked;
+                    updateCounts();
+                });
+            });
+        }
+
         updateCounts();
     }
 
@@ -495,63 +532,66 @@ function renderManagementSection(container, pageData, pageToken) {
         const fromV = fromInput.value ? new Date(fromInput.value + 'T00:00:00') : null;
         const toV   = toInput.value   ? new Date(toInput.value + 'T23:59:59')   : null;
         filtered    = applyPostFilter(allPosts, { fromDate: fromV, toDate: toV, type: typeSelect.value });
-        selected    = new Set([...selected].filter(id => filtered.some(p => p.id === id)));
+        if (isManaged) {
+            selected = new Set([...selected].filter(id => filtered.some(p => p.id === id)));
+            checkAll.checked = checkAll.indeterminate = false;
+        }
         currentPage = 1;
-        checkAll.checked = checkAll.indeterminate = false;
         renderList();
     });
 
-    checkAll.addEventListener('change', () => {
-        if (checkAll.checked) filtered.forEach(p => selected.add(p.id));
-        else                  selected.clear();
-        checkAll.indeterminate = false;
-        renderList();
-    });
+    if (isManaged) {
+        checkAll.addEventListener('change', () => {
+            if (checkAll.checked) filtered.forEach(p => selected.add(p.id));
+            else                  selected.clear();
+            checkAll.indeterminate = false;
+            renderList();
+        });
+
+        btnDeleteSel.addEventListener('click', () => {
+            const toDelete = [...selected].filter(id => filtered.some(p => p.id === id));
+            if (!toDelete.length) return;
+            showConfirmModal({
+                title: `Xóa ${toDelete.length} bài viết?`,
+                body:  `⚠️ Hành động này <strong>không thể hoàn tác</strong>.<br>Bài viết sẽ bị xóa vĩnh viễn khỏi Facebook.`,
+                confirmLabel: 'Xóa vĩnh viễn',
+                danger: true,
+                onConfirm: async () => {
+                    btnDeleteSel.disabled = true;
+                    applyBtn.disabled     = true;
+                    progressArea.style.display = 'block';
+
+                    const results = await deletePostsWithProgress(toDelete, activeToken, (done, total, r) => {
+                        const pct = Math.round(done / total * 100);
+                        progBar.style.width  = pct + '%';
+                        progText.textContent = `${done}/${total} — ✓ ${r.success}  ✗ ${r.failed}`;
+                    });
+
+                    progressArea.style.display = 'none';
+                    applyBtn.disabled          = false;
+
+                    const deletedSet = new Set(results.failedIds.length < toDelete.length
+                        ? toDelete.filter(id => !results.failedIds.includes(id))
+                        : []);
+                    allPosts  = allPosts.filter(p => !deletedSet.has(p.id));
+                    filtered  = filtered.filter(p => !deletedSet.has(p.id));
+                    selected  = new Set([...selected].filter(id => !deletedSet.has(id)));
+
+                    const msg = results.lastError
+                        ? `Hoàn tất: ✓ ${results.success} thành công  ✗ ${results.failed} thất bại — Lỗi: ${results.lastError}`
+                        : `Hoàn tất: ✓ ${results.success} bài đã xóa thành công`;
+                    showConfirmModal({ title: 'Kết quả xóa', body: msg, confirmLabel: 'OK', danger: false, onConfirm: () => {} });
+
+                    renderList();
+                    btnDeleteSel.disabled = false;
+                }
+            });
+        });
+    }
 
     pagPrev.addEventListener('click', () => { if (currentPage > 1) { currentPage--; renderList(); } });
     pagNext.addEventListener('click', () => {
         if (currentPage < Math.ceil(filtered.length / PAGE_SIZE)) { currentPage++; renderList(); }
-    });
-
-    btnDeleteSel.addEventListener('click', () => {
-        const toDelete = [...selected].filter(id => filtered.some(p => p.id === id));
-        if (!toDelete.length) return;
-        showConfirmModal({
-            title: `Xóa ${toDelete.length} bài viết?`,
-            body:  `⚠️ Hành động này <strong>không thể hoàn tác</strong>.<br>Bài viết sẽ bị xóa vĩnh viễn khỏi Facebook.`,
-            confirmLabel: 'Xóa vĩnh viễn',
-            danger: true,
-            onConfirm: async () => {
-                btnDeleteSel.disabled = true;
-                applyBtn.disabled     = true;
-                progressArea.style.display = 'block';
-
-                const results = await deletePostsWithProgress(toDelete, activeToken, (done, total, r) => {
-                    const pct = Math.round(done / total * 100);
-                    progBar.style.width  = pct + '%';
-                    progText.textContent = `${done}/${total} — ✓ ${r.success}  ✗ ${r.failed}`;
-                });
-
-                progressArea.style.display = 'none';
-                applyBtn.disabled          = false;
-
-                // Remove deleted posts from local state
-                const deletedSet = new Set(results.failedIds.length < toDelete.length
-                    ? toDelete.filter(id => !results.failedIds.includes(id))
-                    : []);
-                allPosts  = allPosts.filter(p => !deletedSet.has(p.id));
-                filtered  = filtered.filter(p => !deletedSet.has(p.id));
-                selected  = new Set([...selected].filter(id => !deletedSet.has(id)));
-
-                const msg = results.lastError
-                    ? `Hoàn tất: ✓ ${results.success} thành công  ✗ ${results.failed} thất bại — Lỗi: ${results.lastError}`
-                    : `Hoàn tất: ✓ ${results.success} bài đã xóa thành công`;
-                showConfirmModal({ title: 'Kết quả xóa', body: msg, confirmLabel: 'OK', danger: false, onConfirm: () => {} });
-
-                renderList();
-                btnDeleteSel.disabled = false;
-            }
-        });
     });
 
     renderList();
@@ -575,12 +615,13 @@ async function loadPage(pageId, panel, tabEl) {
 
         // Try to get page token via /me/accounts first (fast path)
         let pageToken = _userToken;
+        let isManaged = false;
         try {
             const ar = await fetch(`${GRAPH}/me/accounts?fields=id,access_token&limit=200&access_token=${encodeURIComponent(_userToken)}`);
             const ad = await ar.json();
             if (!ad.error) {
                 const match = (ad.data || []).find(p => p.id === pageId);
-                if (match?.access_token) pageToken = match.access_token;
+                if (match?.access_token) { pageToken = match.access_token; isManaged = true; }
             }
         } catch {}
 
@@ -603,7 +644,7 @@ async function loadPage(pageId, panel, tabEl) {
         }
 
         const pageData = { pageId, pageName, followersCount: info.followers_count || 0, posts: raw.map(normalizePost) };
-        renderManagementSection(panel, pageData, pageToken);
+        renderManagementSection(panel, pageData, pageToken, isManaged);
 
     } catch (err) {
         panel.innerHTML = `<div class="loading">❌ ${esc(err.message)}</div>`;

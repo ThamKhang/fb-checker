@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Đăng bài — FB Tools</title>
+  <link rel="stylesheet" href="analysis.css">
+</head>
+<body>
+  <div class="dashboard">
+    <header class="dash-header">
+      <div class="dash-left">
+        <img src="icons/icon48.png" width="28" height="28" alt="">
+        <div>
+          <div class="dash-title">✍️ Đăng bài</div>
+          <div id="dashMeta" class="dash-meta">Đăng lên nhiều page cùng lúc</div>
+        </div>
+      </div>
+    </header>
+
+    <main id="mainContent" class="main-content">
+      <div class="poster-layout">
+
+        <!-- Left: page selection -->
+        <div class="poster-col">
+          <div class="poster-section-head">
+            <span>Chọn page đăng</span>
+            <div class="poster-page-actions">
+              <button id="btnSelectAll" class="btn-link">Tất cả</button>
+              <span class="muted">·</span>
+              <button id="btnSelectNone" class="btn-link">Bỏ chọn</button>
+            </div>
+          </div>
+          <div id="pageStatus" class="poster-status"></div>
+          <div id="pageList" class="page-select-list"></div>
+        </div>
+
+        <!-- Right: queue + schedule + post -->
+        <div class="poster-col poster-col-main">
+
+          <div class="poster-section-head">
+            <span>Bài viết</span>
+            <button id="btnAddPost" class="btn-add-post">+ Thêm bài trống</button>
+          </div>
+
+          <div id="bulkDropzone" class="bulk-dropzone">
+            <input type="file" id="bulkFileInput" accept="image/*" multiple style="display:none">
+            <span style="font-size:26px">🖼</span>
+            <span>Kéo thả nhiều ảnh vào đây — mỗi ảnh tạo 1 bài riêng</span>
+            <span class="poster-dropzone-hint">Hoặc <u style="cursor:pointer">chọn file</u></span>
+          </div>
+
+          <div id="postQueue" class="post-queue"></div>
+
+          <!-- Schedule -->
+          <div class="schedule-section">
+            <div class="poster-section-head" style="margin-bottom:10px">Lịch đăng</div>
+            <div class="schedule-radios">
+              <label class="sched-radio-label">
+                <input type="radio" name="schedType" id="schedNow" checked> Đăng ngay
+              </label>
+              <label class="sched-radio-label">
+                <input type="radio" name="schedType" id="schedLater"> Lên lịch
+              </label>
+            </div>
+            <div id="schedOptions" style="display:none">
+              <div class="sched-opts-row">
+                <label class="sched-label">Bắt đầu từ</label>
+                <input type="datetime-local" id="schedStart" class="sched-input">
+              </div>
+              <div class="sched-opts-row" id="intervalRow" style="display:none">
+                <label class="sched-label">Mỗi bài cách nhau</label>
+                <input type="number" id="intVal" value="1" min="1" max="999" class="sched-int-val">
+                <select id="intUnit" class="sched-int-unit"></select>
+              </div>
+              <div id="schedPreview" class="sched-preview"></div>
+            </div>
+          </div>
+
+          <button id="btnPost" class="btn-post">🚀 Đăng bài</button>
+          <div id="results" class="poster-results" style="display:none"></div>
+
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="poster.js"></script>
+</body>
+</html>

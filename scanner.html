@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>RPM Scanner — FB Tools</title>
+  <link rel="stylesheet" href="analysis.css">
+</head>
+<body>
+  <div class="dashboard">
+    <header class="dash-header">
+      <div class="dash-left">
+        <img src="icons/icon48.png" width="28" height="28" alt="">
+        <div>
+          <div class="dash-title">💰 RPM Scanner</div>
+          <div class="dash-meta">Ước tính RPM & phân tích niche từ public pages · Sai số ±50%</div>
+        </div>
+      </div>
+    </header>
+
+    <main class="main-content sc-main">
+
+      <div class="sc-input-row">
+        <textarea id="pageInput" class="sc-textarea"
+          placeholder="Nhập Page ID hoặc URL — mỗi dòng 1 page&#10;VD:&#10;123456789&#10;https://facebook.com/pagename&#10;@pagename"></textarea>
+        <div class="sc-input-side">
+          <button id="btnScan" class="btn-scan">🔍 Quét RPM</button>
+          <div class="sc-market-row">
+            <label class="sc-market-label">🌍 Thị trường mặc định</label>
+            <select id="marketSelect" class="sc-market-select">
+              <option value="sea" selected>🌏 SEA / Việt Nam (×0.06)</option>
+              <option value="us">🇺🇸 US / Global (×1.0)</option>
+              <option value="eu">🌍 Western Europe (×0.5)</option>
+              <option value="latam">🇧🇷 LatAm / Brazil (×0.15)</option>
+              <option value="india">🇮🇳 India / South Asia (×0.08)</option>
+            </select>
+          </div>
+          <div class="sc-hint">
+            Tool fetch thông tin public của page (followers, talking about, category, posts gần nhất)
+            rồi ước tính RPM theo niche + engagement + video ratio.<br><br>
+            <strong>Không cần là admin</strong> — hoạt động với mọi public page.
+          </div>
+          <div class="sc-legend">
+            <div class="sc-legend-title">Niche RPM range</div>
+            <div class="sc-legend-item"><span class="sc-dot" style="background:#10b981"></span>Finance $8–18</div>
+            <div class="sc-legend-item"><span class="sc-dot" style="background:#3b82f6"></span>Real Estate $6–16</div>
+            <div class="sc-legend-item"><span class="sc-dot" style="background:#8b5cf6"></span>Tech/Business $5–12</div>
+            <div class="sc-legend-item"><span class="sc-dot" style="background:#f59e0b"></span>Health $3–8</div>
+            <div class="sc-legend-item"><span class="sc-dot" style="background:#06b6d4"></span>Education $2–5</div>
+            <div class="sc-legend-item"><span class="sc-dot" style="background:#64748b"></span>News/Media $1.5–4</div>
+            <div class="sc-legend-item"><span class="sc-dot" style="background:#84cc16"></span>Food $1–3</div>
+            <div class="sc-legend-item"><span class="sc-dot" style="background:#ec4899"></span>Entertainment $1–2.5</div>
+            <div class="sc-legend-item"><span class="sc-dot" style="background:#f97316"></span>Comedy/Meme $0.5–1.5</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="scanProgress" style="display:none">
+        <div class="progress-wrap" style="margin-bottom:6px"><div class="progress-bar" id="scanBar"></div></div>
+        <p id="scanStatus" style="font-size:12px;color:#64748b"></p>
+      </div>
+
+      <div id="resultsSection" style="display:none">
+        <div class="sc-results-head">
+          <span id="resultSummary" class="sc-summary"></span>
+          <button id="btnExport" class="btn-export">⬇ Xuất CSV</button>
+        </div>
+        <div class="sc-table-wrap">
+          <table class="sc-table" id="scannerTable">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th data-col="name">Page</th>
+                <th data-col="followers" class="num">Followers</th>
+                <th data-col="talking" class="num">7-day Talk</th>
+                <th data-col="engRate" class="num">Eng Rate</th>
+                <th data-col="videoRatio" class="num">Video %</th>
+                <th data-col="postsPerWeek" class="num">Bài/tuần</th>
+                <th data-col="niche">Niche</th>
+                <th data-col="rpmMin" class="num">Est. RPM</th>
+                <th data-col="monthlyMin" class="num">Est. Monthly</th>
+              </tr>
+            </thead>
+            <tbody id="scannerBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </main>
+  </div>
+  <script src="scanner.js"></script>
+</body>
+</html>

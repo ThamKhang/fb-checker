@@ -120,8 +120,24 @@ function validateInputs() {
     return { token, rawIds };
 }
 
+// ── Tool: Scanner ────────────────────────────────────────
+document.getElementById('toolScanner').addEventListener('click', () => {
+    const token = tokenInput.value.trim();
+    if (!token) { alert('Chưa có token! Bấm "Tự lấy" hoặc paste vào.'); return; }
+    saveState();
+    chrome.tabs.create({ url: chrome.runtime.getURL('scanner.html') });
+});
+
+// ── Tool: Poster ─────────────────────────────────────────
+document.getElementById('toolPoster').addEventListener('click', () => {
+    const token = tokenInput.value.trim();
+    if (!token) { alert('Chưa có token! Bấm "Tự lấy" hoặc paste vào.'); return; }
+    saveState();
+    chrome.tabs.create({ url: chrome.runtime.getURL('poster.html') });
+});
+
 function setToolsDisabled(disabled) {
-    ['toolFollowers', 'toolManager', 'toolAnalysis'].forEach(id => {
+    ['toolFollowers', 'toolManager', 'toolAnalysis', 'toolPoster', 'toolScanner'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.disabled = disabled;
     });
